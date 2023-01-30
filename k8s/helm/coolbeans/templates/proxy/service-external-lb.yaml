@@ -1,0 +1,22 @@
+{{- if .Values.proxy.service.externalLoadBalancer.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "coolbeans.fullname.proxy" . }}-elb
+  labels:
+    {{- include "coolbeans.labels.proxy" . | nindent 4 }}
+  {{- with .Values.proxy.service.externalLoadBalancer.annotations }}
+  annotations:
+    {{- . | toYaml | nindent 4 }}
+  {{- end }}
+spec:
+spec:
+  type: Loadbalancer
+  ports:
+  - port: {{ .Values.proxy.service.port }}
+    targetPort: {{ .Values.proxy.service.port }}
+    protocol: TCP
+    name: beanstalk-tcp
+  selector:
+    {{- include "coolbeans.selectorLabels.proxy" . | nindent 4 }}
+{{- end }}

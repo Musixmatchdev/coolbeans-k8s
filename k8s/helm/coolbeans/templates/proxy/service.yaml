@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "coolbeans.fullname.proxy" . }}
+  labels:
+    {{- include "coolbeans.labels.proxy" . | nindent 4 }}
+spec:
+spec:
+  type: {{ .Values.proxy.service.type }}
+  ports:
+  - port: {{ .Values.proxy.service.port }}
+    targetPort: {{ .Values.proxy.service.port }}
+    protocol: TCP
+    name: beanstalk-tcp
+  selector:
+    {{- include "coolbeans.selectorLabels.proxy" . | nindent 4 }}

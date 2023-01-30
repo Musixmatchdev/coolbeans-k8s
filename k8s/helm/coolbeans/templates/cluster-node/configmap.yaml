@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "coolbeans.fullname" . }}-config
+  labels:
+    {{- include "coolbeans.labels" . | nindent 4 }}
+data:
+  BEANSTALKD_PORT: "11300"
+  PEERS_ADDRS: "coolbeans-0.coolbeans.{{ .Release.Namespace }}.svc.cluster.local:11000,coolbeans-1.coolbeans.{{ .Release.Namespace }}.svc.cluster.local:11000,coolbeans-2.coolbeans.{{ .Release.Namespace }}.svc.cluster.local:11000"
+  BOOTSTRAP_NODE_ID: "coolbeans-0"
+  COOLBEANS_RAFT_PORT: "21000"
+  COOLBEANS_RPC_PORT: "11000"
+  DATA_DIR: "/root/data"
+  ADDR_SUFFIX: "coolbeans.{{ .Release.Namespace }}.svc.cluster.local"
+  SNAPSHOT_THRESHOLD: "100"
+  TRAILING_LOG_COUNT: "10240"
+  SNAPSHOT_INTERVAL_SECS: "30"
+  MAX_JOB_SIZE_BYTES: "65535"
