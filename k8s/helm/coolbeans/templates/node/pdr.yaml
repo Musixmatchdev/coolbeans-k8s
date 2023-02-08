@@ -1,0 +1,17 @@
+{{ if or (eq (.Values.clusterNode.replicaCount | float64) 3.0) (eq (.Values.clusterNode.replicaCount | float64) 5.0) }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "coolbeans.fullname" . }}-node
+  labels:
+    {{- include "coolbeans.labels" . | nindent 4 }}
+spec:
+{{ if eq (.Values.clusterNode.replicaCount | float64) 3.0 }}
+  minAvailable: 2
+{{ else if eq (.Values.clusterNode.replicaCount | float64) 5.0 }}
+  minAvailable: 3
+{{ end }}
+  selector:
+    matchLabels:
+      {{- include "coolbeans.selectorLabels" . | nindent 6 }}
+{{ end }}

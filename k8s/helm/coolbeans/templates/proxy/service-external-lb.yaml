@@ -1,0 +1,21 @@
+{{- if .Values.proxy.service.externalLoadBalancer.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "coolbeans.fullname" . }}-proxy
+  labels:
+    {{- include "coolbeans.labels.proxy" . | nindent 4 }}
+  {{- with .Values.proxy.service.externalLoadBalancer.annotations }}
+  annotations:
+    {{- . | toYaml | nindent 4 }}
+  {{- end }}
+spec:
+  type: LoadBalancer
+  ports:
+  - port: {{ .Values.proxy.service.port }}
+    targetPort: beanstalkd
+    protocol: TCP
+    name: beanstalkd
+  selector:
+    {{- include "coolbeans.selectorLabels.proxy" . | nindent 4 }}
+{{- end }}

@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "coolbeans.fullname" . }}
+  labels:
+    {{- include "coolbeans.labels" . | nindent 4 }}
+data:
+  PEERS_ADDRS: "{{ include "coolbeans.fullname" . }}-node-0.{{ include "coolbeans.fullname" . }}-node.{{ .Release.Namespace }}.svc.cluster.local:11000,{{ include "coolbeans.fullname" . }}-node-1.{{ include "coolbeans.fullname" . }}-node.{{ .Release.Namespace }}.svc.cluster.local:11000,{{ include "coolbeans.fullname" . }}-node-2.{{ include "coolbeans.fullname" . }}-node.{{ .Release.Namespace }}.svc.cluster.local:11000"
+  BOOTSTRAP_NODE_ID: "{{ include "coolbeans.fullname" . }}-node-0"
+  ADDR_SUFFIX: "{{ include "coolbeans.fullname" . }}-node.{{ .Release.Namespace }}.svc.cluster.local"
+  BEANSTALKD_PORT: "{{ .Values.clusterNode.config.beanstalkd_port | default "11300" }}"
+  COOLBEANS_RAFT_PORT: "{{ .Values.clusterNode.config.coolbeans_raft_port | default "21000" }}"
+  COOLBEANS_RPC_PORT: "{{ .Values.clusterNode.config.coolbeans_rpc_port | default "11000" }}"
+  DATA_DIR: "{{ .Values.clusterNode.config.data_dir | default "/root/data" }}"
+  SNAPSHOT_THRESHOLD: "{{ .Values.clusterNode.config.snapshot_threshold | default "100" }}"
+  TRAILING_LOG_COUNT: "{{ .Values.clusterNode.config.trailing_log_count | default "10240" }}"
+  SNAPSHOT_INTERVAL_SECS: "{{ .Values.clusterNode.config.snapshot_interval_secs | default "30" }}"
+  MAX_JOB_SIZE_BYTES: "{{ .Values.clusterNode.config.max_job_size_bytes | default "65535" }}"
+  PROMETHEUS_PORT: "{{ .Values.clusterNode.config.prometheus_port | default "2020" }}"
+  RETAIN_SNAPSHOT_COUNT: "{{ .Values.clusterNode.config.retain_snapshot_count | default "3" }}"

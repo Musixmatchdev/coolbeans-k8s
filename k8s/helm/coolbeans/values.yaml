@@ -1,0 +1,109 @@
+# Default values for coolbeans.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+podLabels: {}
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+topologySpreadConstraints:
+  zone: false
+  hostname: false
+
+image:
+  repository: 1xyz/coolbeans
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: v0.1.10
+
+clusterNode:
+  replicaCount: 3
+  autoscaling:
+    enabled: false
+    minReplicas: 3
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
+  resources:
+    limits:
+      cpu: "2000m"
+      memory: 2Gi
+    requests:
+      cpu: "500m"
+      memory: 1Gi
+  persistance:
+    enabled: true
+    storage: 1Gi
+    storageClassName: ""
+  # prometheus:
+  #   enabled: false
+  #   endpoint: ""
+    # endpoint: prom-endpoint:prom-port
+  config:
+    beanstalkd_port: "11300"
+    coolbeans_raft_port: "21000"
+    coolbeans_rpc_port: "11000"
+    data_dir: "/root/data"
+    snapshot_threshold: "100"
+    trailing_log_count: "10240"
+    snapshot_interval_secs: "30"
+    max_job_size_bytes: "65535"
+    prometheus_port: "2020"
+    retain_snapshot_count: "3"
+
+proxy:
+  replicaCount: 2
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
+  resources:
+    limits:
+      memory: "128Mi"
+      cpu: "500m"
+    requests:
+      memory: "64Mi"
+      cpu: "250m"
+  service:
+    type: ClusterIP
+    port: 11300
+    externalLoadBalancer:
+      enabled: false
+      annotations: {}
+        # service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+        # service.beta.kubernetes.io/aws-load-balancer-scheme: "internal"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+test:
+  enabled: false
+  
