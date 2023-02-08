@@ -1,0 +1,51 @@
+{{- if .Values.test.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "coolbeans.fullname" . }}-test-producer
+  labels:
+    jobgroup: {{ include "coolbeans.fullname" . }}-test-producer
+spec:
+  template:
+    metadata:
+      name: {{ include "coolbeans.fullname" . }}-test-producer
+      namespace: coolbeans
+      labels:
+        jobgroup: {{ include "coolbeans.fullname" . }}-test-producer
+    spec:
+      containers:
+      - name: {{ include "coolbeans.fullname" . }}-test-producer
+        image: 1xyz/jellybeans-workload:master-ebe38f7
+        command: [
+          "/root/jellybeans-workload", "producer",
+            "--addr", "{{ include "coolbeans.fullname" . }}-proxy.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.clusterNode.config.beanstalkd_port | default "11300" }}",
+            "--count", "10000"
+        ]
+      restartPolicy: Never
+  backoffLimit: 1
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: consume-batch-0
+  namespace: coolbeans
+  labels:
+    jobgroup: consumer
+spec:
+  template:
+    metadata:
+      name: consumer
+      namespace: coolbeans
+      labels:
+        jobgroup: consumer
+    spec:
+      containers:
+      - name: consumer
+        image: 1xyz/jellybeans-workload:master-ebe38f7
+        command: [
+          "/root/jellybeans-workload", "consumer",
+            "--addr", "{{ include "coolbeans.fullname" . }}-proxy.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.clusterNode.config.beanstalkd_port | default "11300" }}"
+        ]
+      restartPolicy: Never
+  backoffLimit: 1
+{{- end }}

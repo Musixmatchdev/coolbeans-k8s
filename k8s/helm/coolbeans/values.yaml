@@ -2,6 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+podLabels: {}
 podAnnotations: {}
 
 podSecurityContext: {}
@@ -47,13 +48,24 @@ clusterNode:
       cpu: "500m"
       memory: 1Gi
   persistance:
-    enabled: false
-    storage: 100Gi
-    createPersistentVolume: false
-  prometheus:
-    enabled: false
+    enabled: true
+    storage: 1Gi
+    storageClassName: ""
+  # prometheus:
+  #   enabled: false
+  #   endpoint: ""
     # endpoint: prom-endpoint:prom-port
-    endpoint: ""
+  config:
+    beanstalkd_port: "11300"
+    coolbeans_raft_port: "21000"
+    coolbeans_rpc_port: "11000"
+    data_dir: "/root/data"
+    snapshot_threshold: "100"
+    trailing_log_count: "10240"
+    snapshot_interval_secs: "30"
+    max_job_size_bytes: "65535"
+    prometheus_port: "2020"
+    retain_snapshot_count: "3"
 
 proxy:
   replicaCount: 2
@@ -85,10 +97,13 @@ fullnameOverride: ""
 
 serviceAccount:
   # Specifies whether a service account should be created
-  create: true
+  create: false
   # Annotations to add to the service account
   annotations: {}
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
+test:
+  enabled: false
+  

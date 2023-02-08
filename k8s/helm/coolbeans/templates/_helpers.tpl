@@ -23,18 +23,18 @@ If release name contains chart name it will be used as a full name.
 {{- end }}
 {{- end }}
 
-{{- define "coolbeans.fullname.proxy" -}}
-{{- if .Values.fullnameOverride }}
-{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- $name := default .Chart.Name .Values.nameOverride }}
-{{- if contains $name .Release.Name }}
-{{- .Release.Name | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- printf "%s-%s-proxy" .Release.Name $name | trunc 63 | trimSuffix "-" }}
-{{- end }}
-{{- end }}
-{{- end }}
+# {{- define "coolbeans.fullname.proxy" -}}
+# {{- if .Values.fullnameOverride }}
+# {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+# {{- else }}
+# {{- $name := default .Chart.Name .Values.nameOverride }}
+# {{- if contains $name .Release.Name }}
+# {{- .Release.Name | trunc 63 | trimSuffix "-" }}
+# {{- else }}
+# {{- printf "%s-%s-proxy" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+# {{- end }}
+# {{- end }}
+# {{- end }}
 
 {{/*
 Create chart name and version as used by the chart label.
@@ -53,17 +53,15 @@ helm.sh/chart: {{ include "coolbeans.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-app.context/name: {{ include "coolbeans.chart" . }}
 {{- end }}
 
 {{- define "coolbeans.labels.proxy" -}}
 helm.sh/chart: {{ include "coolbeans.chart" . }}
-{{ include "coolbeans.selectorLabels" . }}
+{{ include "coolbeans.selectorLabels.proxy" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-app.context/name: {{ include "coolbeans.chart" . }}-proxy
 {{- end }}
 
 {{/*
@@ -72,13 +70,13 @@ Selector labels
 {{- define "coolbeans.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "coolbeans.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-app.context/name: {{ include "coolbeans.chart" . }}
+app.kubernetes.io/component: node
 {{- end }}
 
 {{- define "coolbeans.selectorLabels.proxy" -}}
 app.kubernetes.io/name: {{ include "coolbeans.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-app.context/name: {{ include "coolbeans.chart" . }}-proxy
+app.kubernetes.io/component: proxy
 {{- end }}
 
 {{/*

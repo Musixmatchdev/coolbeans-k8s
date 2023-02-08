@@ -2,14 +2,14 @@
 apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "coolbeans.fullname" . }}
+  name: {{ include "coolbeans.fullname" . }}-node
   labels:
     {{- include "coolbeans.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "coolbeans.fullname" . }}
+    name: {{ include "coolbeans.fullname" . }}-node
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:

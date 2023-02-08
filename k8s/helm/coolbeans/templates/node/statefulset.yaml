@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ include "coolbeans.fullname" . }}
+  name: {{ include "coolbeans.fullname" . }}-node
   labels:
     {{- include "coolbeans.labels" . | nindent 4 }}
 spec:
-  serviceName: {{ include "coolbeans.fullname" . }}
+  serviceName: {{ include "coolbeans.fullname" . }}-node
   podManagementPolicy: "Parallel"
   {{- if not .Values.clusterNode.autoscaling.enabled }}
   replicas: {{ .Values.clusterNode.replicaCount }}
   {{- end }}
   updateStrategy:
     type: RollingUpdate
-    rollingUpdate:
-      partition: {{ .Values.clusterNode.replicaCount }}
+    # rollingUpdate:
+    #   partition: {{ .Values.clusterNode.replicaCount }}
   selector:
     matchLabels:
       {{- include "coolbeans.selectorLabels" . | nindent 6 }}
@@ -24,7 +24,8 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "coolbeans.labels" . | nindent 4 }}
+        {{ toYaml .Values.podLabels  | nindent 8 }}
+        {{- include "coolbeans.labels" . | nindent 8 }}
     spec:
       {{- if or .Values.topologySpreadConstraints.zone .Values.topologySpreadConstraints.hostname }}
       topologySpreadConstraints:
@@ -83,94 +84,103 @@ spec:
           - name: COOLBEANS_RAFT_PORT
             valueFrom:
               configMapKeyRef:
-                name: coolbeans-config
+                name: {{ include "coolbeans.fullname" . }}
                 key: COOLBEANS_RAFT_PORT
           - name: COOLBEANS_RPC_PORT
             valueFrom:
               configMapKeyRef:
-                name: coolbeans-config
+                name: {{ include "coolbeans.fullname" . }}
                 key: COOLBEANS_RPC_PORT
           - name: PEERS_ADDRS
             valueFrom:
               configMapKeyRef:
-                name: coolbeans-config
+                name: {{ include "coolbeans.fullname" . }}
                 key: PEERS_ADDRS
           - name: BOOTSTRAP_NODE_ID
             valueFrom:
               configMapKeyRef:
-                name: coolbeans-config
+                name: {{ include "coolbeans.fullname" . }}
                 key: BOOTSTRAP_NODE_ID
           - name: DATA_DIR
             valueFrom:
               configMapKeyRef:
-                name: coolbeans-config
+                name: {{ include "coolbeans.fullname" . }}
                 key: DATA_DIR
           - name: ADDR_SUFFIX
             valueFrom:
               configMapKeyRef:
-                name: coolbeans-config
+                name: {{ include "coolbeans.fullname" . }}
                 key: ADDR_SUFFIX
           - name: SNAPSHOT_THRESHOLD
             valueFrom:
               configMapKeyRef:
-                name: coolbeans-config
+                name: {{ include "coolbeans.fullname" . }}
                 key: SNAPSHOT_THRESHOLD
           - name: TRAILING_LOG_COUNT
             valueFrom:
               configMapKeyRef:
-                name: coolbeans-config
+                name: {{ include "coolbeans.fullname" . }}
                 key: TRAILING_LOG_COUNT
           - name: SNAPSHOT_INTERVAL_SECS
             valueFrom:
               configMapKeyRef:
-                name: coolbeans-config
+                name: {{ include "coolbeans.fullname" . }}
                 key: SNAPSHOT_INTERVAL_SECS
-        command:  ["/root/coolbeans", "cluster-node",
-          "--node-id", "$(NODE_ID)",
-          "--root-dir", "$(DATA_DIR)",
-          "--bootstrap-node-id", "$(BOOTSTRAP_NODE_ID)",
-          "--raft-listen-addr", "$(POD_IP):$(COOLBEANS_RAFT_PORT)",
-          "--raft-advertized-addr", "$(NODE_ID).$(ADDR_SUFFIX):$(COOLBEANS_RAFT_PORT)",
-          "--node-listen-addr", ":$(COOLBEANS_RPC_PORT)",
-          "--node-peer-addrs", "$(PEERS_ADDRS)",
-          ## By default all logs are fsynced to disk (bolt-db)
-          ## By default fsync is called for every commit to the disk log
-          # "--no-fsync",
-          ##
-          ## Here, all the logs are in memory & not in bolt-db, but snapshots as usual are on
-          ## disk. You can tune the snapshot threshold, trailing-log-count etc..
-          # "--no-disk-log"
-          # "--snapshot-threshold", "$(SNAPSHOT_THRESHOLD)",
-          # "--trailing-log-count", "$(TRAILING_LOG_COUNT)",
-          # "--snapshot-interval-secs", "$(SNAPSHOT_INTERVAL_SECS)",
-          {{- if .Values.clusterNode.prometheus.enabled }}
-          "--prometheus-addr", "{{- .Values.clusterNode.prometheus.endpoint -}}"
-          {{- end }}
-          ]
+          - name: MAX_JOB_SIZE_BYTES
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "coolbeans.fullname" . }}
+                key: MAX_JOB_SIZE_BYTES
+        command:  [
+          "/root/coolbeans", "cluster-node",
+            "--node-id", "$(NODE_ID)",
+            "--root-dir", "$(DATA_DIR)",
+            "--bootstrap-node-id", "$(BOOTSTRAP_NODE_ID)",
+            "--raft-listen-addr", "$(POD_IP):$(COOLBEANS_RAFT_PORT)",
+            "--raft-advertized-addr", "$(NODE_ID).$(ADDR_SUFFIX):$(COOLBEANS_RAFT_PORT)",
+            "--node-listen-addr", ":$(COOLBEANS_RPC_PORT)",
+            "--node-peer-addrs", "$(PEERS_ADDRS)",
+            ## By default all logs are fsynced to disk (bolt-db)
+            ## By default fsync is called for every commit to the disk log
+            # "--no-fsync",
+            ##
+            ## Here, all the logs are in memory & not in bolt-db, but snapshots as usual are on
+            ## disk. You can tune the snapshot threshold, trailing-log-count etc..
+            # "--no-disk-log"
+            "--retain-snapshot-count", "{{ .Values.clusterNode.config.retain_snapshot_count | default "3" }}",
+            "--restore-timeout-secs", "600",
+            "--snapshot-threshold", "$(SNAPSHOT_THRESHOLD)",
+            "--trailing-log-count", "$(TRAILING_LOG_COUNT)",
+            "--snapshot-interval-secs", "$(SNAPSHOT_INTERVAL_SECS)",
+            "--prometheus-addr", "127.0.0.1:{{ .Values.clusterNode.config.prometheus_port | default "2020" }}"
+        ]
         ports:
-        - containerPort: 11000
+        - containerPort: {{ .Values.clusterNode.config.coolbeans_rpc_port | default "11000" }}
           name: grpc-server
-        - containerPort: 21000
+        - containerPort: {{ .Values.clusterNode.config.coolbeans_raft_port | default "21000" }}
           name: raft-tcp
+        - containerPort: {{ .Values.clusterNode.config.prometheus_port | default "2020" }}
+          name: metrics
         resources:
           {{- toYaml .Values.clusterNode.resources | nindent 12 }}
         {{- if .Values.clusterNode.persistance.enabled}}
         volumeMounts:
-        - name: data
-          mountPath: /root/data
+        - name: {{ include "coolbeans.fullname" . }}-node
+          mountPath: {{ .Values.clusterNode.config.data_dir | default "/root/data" }}
         {{- end }}
-        readinessProbe:
-          exec:
-            command: ["/root/coolbeans", "--verbose", "cluster-client", "is_leader", "--node-addr", "localhost:11000"]
-          initialDelaySeconds: 30
-          periodSeconds: 15
+        # readinessProbe:
+        #   exec:
+        #     command: ["/root/coolbeans", "--verbose", "cluster-client", "is_leader", "--node-addr", "localhost:11000"]
+        #   initialDelaySeconds: 30
+        #   periodSeconds: 15
   {{- if .Values.clusterNode.persistance.enabled}}
   volumeClaimTemplates:
     - metadata:
-        name: data
+        name: {{ include "coolbeans.fullname" . }}-node
       spec:
         accessModes: [ "ReadWriteOnce" ]
+        storageClassName: {{ .Values.clusterNode.persistance.storageClassName }}
         resources:
           requests:
-            storage: {{- .Values.clusterNode.persistance.storage -}}
+            storage: {{ .Values.clusterNode.persistance.storage }}
   {{- end }}

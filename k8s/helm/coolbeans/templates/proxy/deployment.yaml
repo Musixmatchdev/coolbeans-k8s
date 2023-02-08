@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "coolbeans.fullname.proxy" . }}
+  name: {{ include "coolbeans.fullname" . }}-proxy
   labels:
     {{- include "coolbeans.labels.proxy" . | nindent 4 }}
 spec:
@@ -18,7 +18,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "coolbeans.labels.proxy" . | nindent 4 }}
+        {{- include "coolbeans.labels.proxy" . | nindent 8 }}
     spec:
       {{- if or .Values.topologySpreadConstraints.zone .Values.topologySpreadConstraints.hostname }}
       topologySpreadConstraints:
@@ -70,24 +70,24 @@ spec:
           "--upstream-addrs", "$(PEERS_ADDRS)",
           "--max-job-size", "$(MAX_JOB_SIZE_BYTES)"]
         ports:
-          - containerPort: 11300
-            name: beanstalkd-tcp
+          - containerPort: {{ .Values.clusterNode.config.beanstalkd_port | default "11300" }}
+            name: beanstalkd
         resources:
           {{- toYaml .Values.proxy.resources | nindent 12 }}
         env:
         - name: BEANSTALKD_PORT
           valueFrom:
             configMapKeyRef:
-              name: coolbeans-config
+              name: {{ include "coolbeans.fullname" . }}
               key: BEANSTALKD_PORT
         - name: PEERS_ADDRS
           valueFrom:
             configMapKeyRef:
-              name: coolbeans-config
+              name: {{ include "coolbeans.fullname" . }}
               key: PEERS_ADDRS
         - name:  MAX_JOB_SIZE_BYTES
           valueFrom:
             configMapKeyRef:
-              name: coolbeans-config
+              name: {{ include "coolbeans.fullname" . }}
               key: MAX_JOB_SIZE_BYTES
       restartPolicy: Always
